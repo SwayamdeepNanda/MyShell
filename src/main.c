@@ -1,8 +1,3 @@
-/* src/main.c
- * Production-minded lightweight shell with minimal job control (background &, jobs, fg)
- * Paste this entire file into src/main.c on GitHub (overwrite), commit, then pull & build locally.
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
