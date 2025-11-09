@@ -129,6 +129,20 @@ Evaluators can trace execution flow clearly from input parsing → process creat
 
 ---
 
+## Capstone / Final note
+
+This submission implements a production-minded lightweight shell in C with POSIX job control.  
+Key achievements for the capstone evaluation:
+
+- Robust command parsing and execution engine (fork/exec, execvp).
+- POSIX-style piping and I/O redirection (`|`, `>`, `>>`, `<`) for multi-stage pipelines.
+- Background execution (`&`), job table, `jobs` listing, and `fg` to bring jobs to foreground; automatic reaping with non-blocking `waitpid`.
+- Cross-platform fallbacks for Windows (MinGW) while full features are validated on Linux/WSL.
+
+Use `make` (or the GCC command shown) to build and `./bin/myshell` to test. The implementation has been verified to run background jobs and display job lifecycle notifications under WSL.
+
+---
+
 ## **🙌 Acknowledgements**
 
 Special thanks to professors, peers, and open-source contributors for guidance and resources.
