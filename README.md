@@ -51,17 +51,25 @@ Windows-compatible using `_spawnvp()` for basic execution.
 ```
 MyShell/
 │
-├── src/ # Core logic (main.c)
-├── include/ # Header files
-├── docs/ # Reports and documentation
+├── docs/ # Documentation
 │ ├── design/
-│ │ └── architecture.md
-│ └── report.md
-├── scripts/ # Helper scripts (build, valgrind, format)
-├── tests/ # Future unit & integration tests
+│ │ └── architecture.md # High-level architecture overview
+│ └── report.md # Project report / summary
+│
+├── scripts/ # Helper scripts for formatting & testing
+│ ├── format_all.sh
+│ ├── run_checks.sh
+│ └── run_valgrind.sh
+│
+├── src/ # Core source code
+│ └── main.c
+│
+├── .clang-format # Code formatting rules
+├── .editorconfig # Editor consistency settings
+├── .gitignore # Git ignore rules
+├── CMakeLists.txt # Cross-platform build config
 ├── Makefile # Build automation
-├── CMakeLists.txt # Cross-platform build configuration
-└── README.md # Overview and guide
+└── README.md # Project overview and documentation
 
 ```
 ---
