@@ -97,7 +97,7 @@ On Windows (MinGW)
 gcc -std=gnu11 -Wall -Wextra -Wpedantic -fstack-protector-strong -D_GNU_SOURCE src/main.c -o bin/myshell.exe
 ./bin/myshell.exe
 ```
-
+---
 
 ## **🧱 Architecture Summary**
 
@@ -113,6 +113,7 @@ The design follows a **modular architecture** for readability and maintainabilit
 📄 **Detailed Design:** [`docs/design/architecture.md`](docs/design/architecture.md)  
 📘 **Implementation Report:** [`docs/report.md`](docs/report.md)
 
+---
 
 ## **🎓 Academic Relevance**
 
@@ -126,6 +127,7 @@ How modular shell design improves extensibility
 
 Evaluators can trace execution flow clearly from input parsing → process creation → result output.
 
+---
 
 ## **🙌 Acknowledgements**
 
