@@ -48,4 +48,31 @@ Windows-compatible using `_spawnvp()` for basic execution.
 ---
 
 ## 🏗️ Directory Structure
+MyShell/
+│
+├── src/ # Core logic (main.c)
+├── include/ # Header files
+├── docs/ # Reports and documentation
+│ ├── design/
+│ │ └── architecture.md
+│ └── report.md
+├── scripts/ # Helper scripts (build, valgrind, format)
+├── tests/ # Future unit & integration tests
+├── Makefile # Build automation
+├── CMakeLists.txt # Cross-platform build configuration
+└── README.md # Overview and guide
+
+
+---
+
+## 🧪 Example Usage
+
+```bash
+echo hello
+pwd
+cd ..
+ls
+echo "hi there" > test.txt && cat test.txt
+ls | grep src
+
 
