@@ -21,6 +21,80 @@ void sigint_handler(int sig) { (void)sig; }
 void sigint_handler(int sig) { (void)sig; write(STDOUT_FILENO, "\nmyshell> ", 10); }
 #endif
 
+/* Minimal job table for background jobs (simple, fixed-size) */
+#ifndef _WIN32
+#define MAX_JOBS 64
+struct job {
+    pid_t pid;
+    int id;
+    char *cmd;
+    int running; /* 1 running, 0 finished */
+} jobs[MAX_JOBS];
+int next_job_id = 1;
+
+void add_job(pid_t pid, const char *cmd) {
+    for (int i=0;i<MAX_JOBS;i++){
+        if (jobs[i].pid==0){
+            jobs[i].pid = pid;
+            jobs[i].id = next_job_id++;
+            jobs[i].cmd = strdup(cmd ? cmd : "");
+            jobs[i].running = 1;
+            return;
+        }
+    }
+}
+
+void remove_job_by_pid(pid_t pid) {
+    for (int i=0;i<MAX_JOBS;i++){
+        if (jobs[i].pid==pid) {
+            free(jobs[i].cmd);
+            jobs[i].pid = 0; jobs[i].id = 0; jobs[i].running = 0;
+            jobs[i].cmd = NULL;
+            return;
+        }
+    }
+}
+
+void mark_job_done(pid_t pid) {
+    for (int i=0;i<MAX_JOBS;i++){
+        if (jobs[i].pid==pid) { jobs[i].running = 0; return; }
+    }
+}
+
+void builtin_jobs() {
+    for (int i=0;i<MAX_JOBS;i++){
+        if (jobs[i].pid) {
+            printf("[%d] %d %s %s\n", jobs[i].id, (int)jobs[i].pid,
+                   jobs[i].running ? "Running" : "Done", jobs[i].cmd ? jobs[i].cmd : "");
+        }
+    }
+}
+
+int find_job_pid_by_id(int id) {
+    for (int i=0;i<MAX_JOBS;i++){
+        if (jobs[i].id == id) return (int)jobs[i].pid;
+    }
+    return -1;
+}
+
+void reap_background_jobs_nonblocking() {
+    int status = 0;
+    pid_t pid;
+    while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
+        /* mark or remove job and notify user */
+        for (int i=0;i<MAX_JOBS;i++){
+            if (jobs[i].pid == pid) {
+                jobs[i].running = 0;
+                printf("\n[done] %d %s\nmyshell> ", (int)pid, jobs[i].cmd ? jobs[i].cmd : "");
+                fflush(stdout);
+                remove_job_by_pid(pid);
+                break;
+            }
+        }
+    }
+}
+#endif
+
 /* simple whitespace-aware tokenizer (respects basic quoting handled by strtok in this context) */
 char **tokenize_input(char *line) {
     int bufsize = 64, position = 0;
@@ -53,7 +127,7 @@ static char *trim(char *s) {
 
 int is_builtin(char **args) {
     if (args == NULL || args[0] == NULL) return 0;
-    return (strcmp(args[0], "cd") == 0 || strcmp(args[0], "exit") == 0 || strcmp(args[0], "pwd") == 0);
+    return (strcmp(args[0], "cd") == 0 || strcmp(args[0], "exit") == 0 || strcmp(args[0], "pwd") == 0 || strcmp(args[0], "jobs") == 0 || strcmp(args[0], "fg") == 0);
 }
 
 int run_builtin(char **args) {
@@ -72,6 +146,24 @@ int run_builtin(char **args) {
     } else if (strcmp(args[0], "exit") == 0) {
         exit(0);
     }
+#ifndef _WIN32
+    else if (strcmp(args[0], "jobs") == 0) {
+        builtin_jobs();
+        return 0;
+    } else if (strcmp(args[0], "fg") == 0) {
+        if (!args[1]) { fprintf(stderr, "fg: missing job id\n"); return -1; }
+        int id = atoi(args[1]);
+        if (id <= 0) { fprintf(stderr, "fg: invalid id\n"); return -1; }
+        int pid = find_job_pid_by_id(id);
+        if (pid <= 0) { fprintf(stderr, "fg: no such job\n"); return -1; }
+        /* bring to foreground by waiting for it */
+        if (kill(pid, SIGCONT) == -1) perror("fg: kill(SIGCONT)");
+        int status;
+        if (waitpid(pid, &status, 0) == -1) perror("waitpid");
+        remove_job_by_pid(pid);
+        return 0;
+    }
+#endif
     return -1;
 }
 
@@ -233,6 +325,27 @@ void execute_simple_command(char **args) {
 #endif
 }
 
+#ifndef _WIN32
+/* execute a command in background (non-blocking) */
+void execute_in_background(char **args, const char *cmdline_copy) {
+    pid_t pid = fork();
+    if (pid == 0) {
+        /* child */
+        if (execvp(args[0], args) == -1) {
+            perror("myshell");
+            _exit(127);
+        }
+        _exit(0);
+    } else if (pid < 0) {
+        perror("myshell");
+    } else {
+        /* parent: register job and do not wait */
+        add_job(pid, cmdline_copy);
+        printf("[%d] %d\n", next_job_id-1, (int)pid);
+    }
+}
+#endif
+
 /* decide whether line contains a pipeline */
 int contains_pipe(const char *line) {
     return strchr(line, '|') != NULL;
@@ -248,6 +361,11 @@ int main(void) {
 #endif
 
     while (1) {
+#ifndef _WIN32
+        /* reap any finished background jobs without blocking */
+        reap_background_jobs_nonblocking();
+#endif
+
         printf("myshell> ");
         fflush(stdout);
         if (getline(&line, &bufsize, stdin) == -1) { printf("\n"); break; }
@@ -266,7 +384,14 @@ int main(void) {
             continue;
         }
 
+        /* copy the trimmed line for job registration if needed */
+        char *cmdline_copy = NULL;
+#ifndef _WIN32
+        cmdline_copy = strdup(linetrim);
+#endif
+
         args = tokenize_input(linetrim);
+
         /* detect simple I/O redirection without pipes (>, >>, <) */
         int need_simple_redir = 0;
         for (int i=0; args[i]; ++i) {
@@ -274,6 +399,15 @@ int main(void) {
                 need_simple_redir = 1;
                 break;
             }
+        }
+
+        /* detect background '&' at end */
+        int background = 0;
+        int last = 0;
+        while (args[last]) last++;
+        if (last > 0 && strcmp(args[last-1], "&") == 0) {
+            background = 1;
+            args[last-1] = NULL; /* remove & */
         }
 
         if (need_simple_redir && !contains_pipe(linetrim)) {
@@ -311,11 +445,32 @@ int main(void) {
             printf("redirection not supported on this Windows build\n");
 #endif
             free(args);
+            if (cmdline_copy) free(cmdline_copy);
             continue;
         }
 
+        /* builtins */
+        if (is_builtin(args)) {
+            run_builtin(args);
+            free(args);
+            if (cmdline_copy) free(cmdline_copy);
+            continue;
+        }
+
+#ifndef _WIN32
+        if (background) {
+            /* run in background: fork and do not wait */
+            execute_in_background(args, cmdline_copy);
+            free(args);
+            if (cmdline_copy) free(cmdline_copy);
+            continue;
+        }
+#endif
+
+        /* foreground or Windows simple exec */
         execute_simple_command(args);
         free(args);
+        if (cmdline_copy) free(cmdline_copy);
     }
 
     free(line);
