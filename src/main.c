@@ -12,39 +12,26 @@
   #include <signal.h>
 #endif
 
-#define INPUT_SIZE 1024
 #define TOK_DELIM " \t\r\n\a"
 
 #ifdef _WIN32
-void sigint_handler(int sig) { (void)sig; /* no-op on Windows console */ }
+void sigint_handler(int sig) { (void)sig; }
 #else
-void sigint_handler(int sig) {
-    (void)sig;
-    write(STDOUT_FILENO, "\nmyshell> ", 10);
-}
+void sigint_handler(int sig) { (void)sig; write(STDOUT_FILENO, "\nmyshell> ", 10); }
 #endif
 
 char **tokenize_input(char *line) {
     int bufsize = 64, position = 0;
     char **tokens = malloc(bufsize * sizeof(char*));
     char *token;
-
-    if (!tokens) {
-        fprintf(stderr, "myshell: allocation error\n");
-        exit(EXIT_FAILURE);
-    }
-
+    if (!tokens) { fprintf(stderr, "myshell: allocation error\n"); exit(EXIT_FAILURE); }
     token = strtok(line, TOK_DELIM);
     while (token != NULL) {
         tokens[position++] = token;
         if (position >= bufsize) {
             bufsize += 64;
             char **tmp = realloc(tokens, bufsize * sizeof(char*));
-            if (!tmp) {
-                free(tokens);
-                fprintf(stderr, "myshell: allocation error\n");
-                exit(EXIT_FAILURE);
-            }
+            if (!tmp) { free(tokens); fprintf(stderr, "myshell: allocation error\n"); exit(EXIT_FAILURE); }
             tokens = tmp;
         }
         token = strtok(NULL, TOK_DELIM);
@@ -53,22 +40,63 @@ char **tokenize_input(char *line) {
     return tokens;
 }
 
+int is_builtin(char **args) {
+    if (args == NULL || args[0] == NULL) return 0;
+    return (strcmp(args[0], "cd") == 0 || strcmp(args[0], "exit") == 0 || strcmp(args[0], "pwd") == 0);
+}
+
+int run_builtin(char **args) {
+    if (strcmp(args[0], "cd") == 0) {
+        char *dir = args[1];
+        if (!dir) dir = getenv("HOME");
+        if (!dir) dir = ".";
+#ifdef _WIN32
+        if (chdir(dir) != 0) { perror("cd"); return -1; }
+#else
+        if (chdir(dir) != 0) { perror("cd"); return -1; }
+#endif
+        return 0;
+    } else if (strcmp(args[0], "pwd") == 0) {
+        char cwd[4096];
+        if (getcwd(cwd, sizeof(cwd)) != NULL) {
+            printf("%s\n", cwd);
+            return 0;
+        } else { perror("pwd"); return -1; }
+    } else if (strcmp(args[0], "exit") == 0) {
+        exit(0);
+    }
+    return -1;
+}
+
 void execute_command(char **args) {
     if (args == NULL || args[0] == NULL) return;
 
-    if (strcmp(args[0], "exit") == 0) exit(0);
+    int background = 0;
+    /* detect trailing & and remove it */
+    int i = 0;
+    while (args[i]) i++;
+    if (i > 0 && strcmp(args[i-1], "&") == 0) {
+        background = 1;
+        args[i-1] = NULL;
+    }
+
+    if (is_builtin(args)) {
+        run_builtin(args);
+        return;
+    }
 
 #ifdef _WIN32
-    /* spawn and wait for command on Windows */
-    /* _spawnvp expects const char * const *; cast is safe for argv usage here */
-    intptr_t rc = _spawnvp(_P_WAIT, args[0], (const char * const *)args);
-    if (rc == -1) {
-        perror("myshell");
+    if (background) {
+        intptr_t rc = _spawnvp(_P_NOWAIT, args[0], (const char * const *)args);
+        if (rc == -1) perror("myshell");
+        else printf("[bg] pid %ld\n", (long)rc);
+    } else {
+        intptr_t rc = _spawnvp(_P_WAIT, args[0], (const char * const *)args);
+        if (rc == -1) perror("myshell");
     }
 #else
     pid_t pid = fork();
     if (pid == 0) {
-        /* Child process */
         if (execvp(args[0], args) == -1) {
             perror("myshell");
         }
@@ -76,11 +104,16 @@ void execute_command(char **args) {
     } else if (pid < 0) {
         perror("myshell");
     } else {
-        int status;
-        pid_t wpid;
-        do {
-            wpid = waitpid(pid, &status, WUNTRACED);
-        } while (wpid > 0 && !WIFEXITED(status) && !WIFSIGNALED(status));
+        if (background) {
+            printf("[bg] pid %d\n", pid);
+            /* do not wait for background job */
+        } else {
+            int status;
+            pid_t wpid;
+            do {
+                wpid = waitpid(pid, &status, 0);
+            } while (wpid > 0 && !WIFEXITED(status) && !WIFSIGNALED(status));
+        }
     }
 #endif
 }
@@ -101,7 +134,6 @@ int main(void) {
             printf("\n");
             break;
         }
-        /* remove trailing newline is handled by strtok when tokenizing */
         args = tokenize_input(line);
         execute_command(args);
         free(args);
