@@ -28,7 +28,7 @@ void sigint_handler(int sig) { (void)sig; write(STDOUT_FILENO, "\nmyshell> ", 10
 #endif
 
 /* -------------------- Minimal job table (POSIX only) -------------------- */
-#ifndef _WIN32
+#if 1
 #define MAX_JOBS 64
 struct job {
     pid_t pid;
@@ -145,7 +145,7 @@ static int is_builtin(char **args) {
     return (strcmp(args[0], "cd") == 0 ||
             strcmp(args[0], "exit") == 0 ||
             strcmp(args[0], "pwd") == 0
-#ifndef _WIN32
+#if 1
             || strcmp(args[0], "jobs") == 0
             || strcmp(args[0], "fg") == 0
 #endif
@@ -169,7 +169,7 @@ static int run_builtin(char **args) {
     } else if (strcmp(args[0], "exit") == 0) {
         exit(0);
     }
-#ifndef _WIN32
+#if 1
     else if (strcmp(args[0], "jobs") == 0) {
         builtin_jobs();
         return 0;
@@ -213,7 +213,7 @@ static void execute_simple_command(char **args) {
 }
 
 /* pipeline + redirection (POSIX) - preserved from prior implementation */
-#ifndef _WIN32
+#if 1
 static int execute_pipeline_from_line(char *line) {
     char *parts[64];
     int nparts = 0;
@@ -328,7 +328,7 @@ static int execute_pipeline_from_line(char *line) {
 }
 #endif
 
-#ifndef _WIN32
+#if 1
 /* execute a command in background (non-blocking) */
 static void execute_in_background(char **args, const char *cmdline_copy) {
     pid_t pid = fork();
@@ -356,12 +356,12 @@ int main(void) {
     size_t bufsize = 0;
     char **args;
 
-#ifndef _WIN32
+#if 1
     signal(SIGINT, sigint_handler);
 #endif
 
     while (1) {
-#ifndef _WIN32
+#if 1
         reap_background_jobs_nonblocking();
 #endif
 
@@ -372,7 +372,7 @@ int main(void) {
         if (linetrim[0] == '\0') continue;
 
         if (contains_pipe(linetrim)) {
-#ifndef _WIN32
+#if 1
             char *copy = strdup(linetrim);
             execute_pipeline_from_line(copy);
             free(copy);
@@ -382,7 +382,7 @@ int main(void) {
             continue;
         }
 
-#ifndef _WIN32
+#if 1
         char *cmdline_copy = strdup(linetrim); /* used for job registration */
 #else
         char *cmdline_copy = NULL;
@@ -407,7 +407,7 @@ int main(void) {
         }
 
         if (need_simple_redir && !contains_pipe(linetrim)) {
-#ifndef _WIN32
+#if 1
             char *infile = NULL, *outfile = NULL;
             int append = 0;
             for (int i = 0; args[i]; ++i) {
@@ -442,7 +442,7 @@ int main(void) {
 #endif
             for (int i = 0; args[i]; ++i) ; /* noop just to avoid compiler warnings */
             free(args);
-#ifndef _WIN32
+#if 1
             free(cmdline_copy);
 #endif
             continue;
@@ -451,13 +451,13 @@ int main(void) {
         if (is_builtin(args)) {
             run_builtin(args);
             free(args);
-#ifndef _WIN32
+#if 1
             free(cmdline_copy);
 #endif
             continue;
         }
 
-#ifndef _WIN32
+#if 1
         if (background) {
             execute_in_background(args, cmdline_copy);
             free(args);
@@ -468,7 +468,7 @@ int main(void) {
 
         execute_simple_command(args);
         free(args);
-#ifndef _WIN32
+#if 1
         free(cmdline_copy);
 #endif
     }
