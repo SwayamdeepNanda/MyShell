@@ -48,6 +48,7 @@ Windows-compatible using `_spawnvp()` for basic execution.
 ---
 
 ## 🏗️ Directory Structure
+```
 MyShell/
 │
 ├── src/ # Core logic (main.c)
@@ -62,7 +63,7 @@ MyShell/
 ├── CMakeLists.txt # Cross-platform build configuration
 └── README.md # Overview and guide
 
-
+```
 ---
 
 ## 🧪 Example Usage
