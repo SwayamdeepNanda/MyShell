@@ -76,7 +76,8 @@ echo "hi there" > test.txt && cat test.txt
 ls | grep src
 ```
 
-🛠️ Build & Run Instructions
+
+## 🛠️ Build & Run Instructions
 On Linux
 ```
 make
@@ -88,7 +89,8 @@ gcc -std=gnu11 -Wall -Wextra -Wpedantic -fstack-protector-strong -D_GNU_SOURCE s
 ./bin/myshell.exe
 ```
 
-**## 🧱 Architecture Summary**
+
+## **🧱 Architecture Summary**
 
 The design follows a **modular architecture** for readability and maintainability:
 
@@ -103,7 +105,7 @@ The design follows a **modular architecture** for readability and maintainabilit
 📘 **Implementation Report:** [`docs/report.md`](docs/report.md)
 
 
-**🎓 Academic Relevance**
+## **🎓 Academic Relevance**
 
 MyShell bridges theory and system-level programming practice, enabling students to explore:
 
@@ -116,7 +118,7 @@ How modular shell design improves extensibility
 Evaluators can trace execution flow clearly from input parsing → process creation → result output.
 
 
-**🙌 Acknowledgements**
+## **🙌 Acknowledgements**
 
 Special thanks to professors, peers, and open-source contributors for guidance and resources.
 This project was developed with a focus on clarity, structure, and cross-platform learning.
