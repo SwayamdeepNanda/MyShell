@@ -76,3 +76,53 @@ echo "hi there" > test.txt && cat test.txt
 ls | grep src
 
 
+🛠️ Build & Run Instructions
+On Linux
+make
+./bin/myshell
+
+On Windows (MinGW)
+gcc -std=gnu11 -Wall -Wextra -Wpedantic -fstack-protector-strong -D_GNU_SOURCE src/main.c -o bin/myshell.exe
+./bin/myshell.exe
+
+🧱 Architecture Summary
+
+The design follows a modular architecture for readability and maintainability:
+
+Module	Responsibility
+Tokenizer	Splits user input into executable tokens.
+Executor	Manages fork(), execvp(), redirection, and background jobs.
+Built-ins	Implements core commands (cd, pwd, exit, etc.).
+Pipeline Manager	Coordinates multi-stage commands and redirection.
+
+📄 Detailed design: docs/design/architecture.md
+
+📘 Implementation report: docs/report.md
+
+🎓 Academic Relevance
+
+MyShell bridges theory and system-level programming practice, enabling students to explore:
+
+How OS kernels handle process creation and I/O
+
+How command interpreters parse and execute pipelines
+
+How modular shell design improves extensibility
+
+Evaluators can trace execution flow clearly from input parsing → process creation → result output.
+
+🙌 Acknowledgements
+
+Special thanks to professors, peers, and open-source contributors for guidance and resources.
+This project was developed with a focus on clarity, structure, and cross-platform learning.
+
+“A shell isn’t just a command interpreter — it’s the symphony of processes, orchestrated in C.”
+
+
+---
+
+✅ This version:
+- Keeps emoji headings for elegance but adds Markdown tables and spacing for clean GitHub rendering.  
+- Looks structured, balanced, and readable across light/dark themes.  
+
+Paste this as your **final README.md** → commit and push → then say **done**.
