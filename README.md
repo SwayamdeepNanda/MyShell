@@ -1,72 +1,133 @@
-# 🧠 MyShell — A Lightweight, Portable Command Shell in C
+```markdown
+# 🧩 MyShell — Lightweight, Portable Command Shell in C
 
 **Author:** Swayamdeep Nanda  
 **Course:** Linux System Programming / Capstone  
 **Date:** 09-Nov-2025  
-**Repository:** [https://github.com/SwayamdeepNanda/MyShell](https://github.com/SwayamdeepNanda/MyShell)
+**Repository:** [MyShell on GitHub](https://github.com/SwayamdeepNanda/MyShell)
 
 ---
 
-## 🌟 Overview
+## 🧠 Project Overview
 
-**MyShell** is a minimal yet production-minded command-line shell implemented in **C**.  
-It demonstrates key **Operating System concepts** such as process creation, command parsing,  
-I/O redirection, and inter-process communication through pipelines.
+**MyShell** is a lightweight, modular command shell implemented in **C**, designed to demonstrate deep understanding of **UNIX process control**, **system calls**, and **command execution**.  
+It supports **built-in commands**, **directory navigation**, **piping**, **I/O redirection**, and **cross-platform execution (Windows + POSIX)** — built for both **academic rigor** and **practical exploration**.
 
-The goal is to create a **modular, cross-platform, and safe shell** —  
-simple enough for learning, yet structured like a real-world system.
+This project was developed as part of a **Linux System Programming / Capstone** course to showcase real-world shell internals and modular system design.
 
 ---
 
 ## 🎯 Objectives
 
-- Implement a portable **command shell** using standard C.
-- Demonstrate **process management**, **piping**, and **redirection**.
-- Support essential **built-in commands** (`cd`, `pwd`, `exit`).
-- Integrate **cross-platform compatibility** (Windows & Linux).
-- Maintain clean formatting, build automation, and documentation for evaluation.
+- Build a production-style shell implementation from scratch in C.  
+- Demonstrate process creation, management, and inter-process communication.  
+- Include modular and safe design patterns (tokenizer, parser, built-ins, executor).  
+- Provide cross-platform support and clean documentation.  
+- Include reproducible builds using **Makefile** and **CMake**.
 
 ---
 
-## 🧩 Project Structure
+## 🧩 Features
 
-| Directory / File | Description |
-|------------------|-------------|
-| `src/` | Core source files — main shell engine, parsing, execution |
-| `include/` | Header files and interfaces |
-| `plugins/` | Future extension system (for modular commands) |
-| `tests/` | Unit and integration tests |
-| `docs/` | Report, design architecture, and documentation |
-| `Makefile`, `CMakeLists.txt` | Build automation (GCC/CMake) |
-| `.clang-format`, `.editorconfig`, `.gitignore` | Code quality and consistency |
-| `scripts/` | Helper scripts for formatting, linting, and Valgrind testing |
+✅ **Core Built-ins:**  
+`cd`, `pwd`, `exit`, and `echo` with proper path and environment handling.  
 
----
+✅ **Execution Engine:**  
+Handles command parsing, process forking, and exec-family calls.
 
-## ⚙️ Key Features
+✅ **Piping and Redirection (Linux):**  
+Supports `|`, `>`, `>>`, `<` operators and multi-command pipelines.
 
-- ✅ Built-ins: `cd`, `pwd`, `exit`  
-- ✅ Command execution using `fork()` and `execvp()`  
-- ✅ Input/output redirection (`>`, `<`, `>>`)  
-- ✅ Pipeline support using `|` (Linux only)  
-- ✅ Graceful handling of `SIGINT` (`Ctrl+C`)  
-- ✅ Portable to Windows via MinGW (limited features)
+✅ **Cross-Platform Fallback:**  
+Windows build executes simple commands using `_spawnvp()` safely.
+
+✅ **Formatting, Testing, and Memory Checking:**  
+- `scripts/format_all.sh` — auto-code formatter (clang-format)  
+- `scripts/run_valgrind.sh` — memory safety checks (Linux only)  
+- `scripts/run_checks.sh` — placeholder for static analysis, linting
 
 ---
 
-## 🧱 Build and Run Instructions
+## 🏗️ Directory Structure
 
-### 🐧 On Linux / WSL (Recommended)
+```
+
+MyShell/
+│
+├── src/               # Core implementation (main.c)
+├── include/           # Header files (future modular expansion)
+├── docs/              # Architecture & report documentation
+│   ├── design/
+│   │   └── architecture.md
+│   └── report.md
+├── scripts/           # Utility scripts (format, valgrind, tests)
+├── tests/             # Future unit tests
+├── Makefile           # Build automation
+├── CMakeLists.txt     # Alternative cross-platform build
+└── README.md          # Project overview
+
+````
+
+---
+
+## ⚙️ Build Instructions
+
+### On Linux (recommended)
+```bash
+make
+./bin/myshell
+````
+
+### On Windows (MinGW)
 
 ```bash
-# build
-make
+gcc -std=gnu11 -Wall -Wextra -Wpedantic -fstack-protector-strong -D_GNU_SOURCE src/main.c -o bin/myshell.exe
+./bin/myshell.exe
+```
 
-# run
-./bin/myshell
+---
 
-# example commands
-echo hello | tr a-z A-Z
-echo hi > test.txt && cat test.txt
+## 🧪 Example Commands
+
+```bash
+echo hello
 pwd
+cd ..
 ls
+echo "hi there" > test.txt && cat test.txt
+ls | grep src
+```
+
+---
+
+## 🧱 Architecture Highlights
+
+The codebase follows a clean modular structure emphasizing:
+
+* **Tokenizer** — breaks user input into executable tokens.
+* **Executor** — handles forking, execvp, and redirection.
+* **Built-ins** — minimal yet robust internal commands.
+* **Pipeline Manager (POSIX)** — executes complex multi-stage commands.
+
+Architecture summary: [`docs/design/architecture.md`](docs/design/architecture.md)
+Detailed explanation and code excerpt: [`docs/report.md`](docs/report.md)
+
+---
+
+## 📘 Academic Value
+
+This project bridges **OS theory** and **system-level programming practice**.
+Students and evaluators can trace process flow from parsing to execution, gaining a real-world understanding of how shells manage input/output, redirection, and concurrency.
+
+---
+
+## 👏 Acknowledgements
+
+Special thanks to instructors, peers, and open-source contributors who inspired the modular and test-driven approach of **MyShell**.
+
+---
+
+> “A shell is not just a command interpreter — it’s the art of orchestrating processes.”
+
+```
+```
